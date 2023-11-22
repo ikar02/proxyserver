@@ -1,37 +1,29 @@
-#include <arpa/inet.h>
-#include <dirent.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#ifndef SAFEQUEUE_H
+#define SAFEQUEUE_H
+#define PATH 256
 
 typedef struct {
-    char *path;
-    int priority;  
-    int delay;  
-} Job;
+    int fd;
+    int priority;
+    int delay;
+    char path[PATH];
+} job;
+
 
 typedef struct {
-    Job *jobs;  
-    int capacity;  
-    int size;  
-    pthread_mutex_t lock;  
-    pthread_cond_t cond;  
-} PriorityQueue;
+    job *jobs;
+    int capacity;
+    int size;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+} priority_queue;
 
-extern PriorityQueue* create_queue();
+priority_queue *create_queue(int capacity);
 
-extern void add_work(PriorityQueue *queue, Job job);
+int add_work(priority_queue *queue, int priority, int client_fd, int delay, const char *path);
 
-extern Job get_work(PriorityQueue *queue);
+job get_work(priority_queue *queue);
 
-extern Job get_work_nonblocking(PriorityQueue *queue);
+int get_work_nonblocking(priority_queue *queue, job *item);
+
+#endif 
